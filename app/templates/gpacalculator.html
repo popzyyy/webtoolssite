@@ -1,0 +1,69 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block content %}
+    <style>
+        .formset-container {
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <!-- Banner -->
+    <div id="banner-wrapper">
+        <div id="banner" class="box container">
+            <div class="row">
+                <div class="container mt-5">
+
+                    <h2>Cumulative GPA Calculator</h2>
+
+                    <form id="form-container" method="POST">
+                    <div class="fieldWrapper">
+                        {% csrf_token %}
+                        {{ formset.management_form }}
+                        {% for form in formset %}
+                            <div class="membership-form">
+                                {{ form.as_p }}
+                                <hr>
+                            </div>
+                        {% endfor %}
+                    </div>
+                        <button id="add-form" type="button">Add a Class</button>
+                        <button type="submit">Calculate GPA</button>
+                    </form>
+
+                    {% if cum_gpa %}
+                        <p>Cumulative Weighted GPA: {{ cum_gpa | floatformat:4 }}</p>
+                    {% endif %}
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+  <script>
+        let membershipForm = document.querySelectorAll(".membership-form")
+        let container = document.querySelector("#form-container")
+        let addButton = document.querySelector("#add-form")
+        let totalForms = document.querySelector("#id_form-TOTAL_FORMS")
+
+        let formNum = membershipForm.length-1
+        addButton.addEventListener('click', addForm)
+
+        function addForm(e){
+            e.preventDefault()
+
+            let newForm = membershipForm[0].cloneNode(true)
+            let formRegex = RegExp(`form-(\\d){1}-`,'g')
+
+            formNum++
+            newForm.innerHTML = newForm.innerHTML.replace(formRegex, `form-${formNum}-`)
+            container.insertBefore(newForm, addButton)
+
+            totalForms.setAttribute('value', `${formNum+1}`)
+        }
+    </script>
+
+{% endblock %}
+
+
+<div>
