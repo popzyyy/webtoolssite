@@ -1,6 +1,8 @@
+import datetime
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from django.forms import ModelForm, Textarea, TextInput, formset_factory, modelformset_factory
+from django.forms import ModelForm, Textarea, TextInput, formset_factory, modelformset_factory, BaseModelFormSet
 from app.models import *
 
 
@@ -16,23 +18,45 @@ class CustomUserChangeForm(UserChangeForm):
         fields = ('email', 'is_staff', 'is_active',)
 
 
-'''
 class GPAForm(forms.ModelForm):
+    class Meta:
+        model = GPA
+        fields = ('class_name', 'class_grade', 'class_credits')
 
 
-    class_name = forms.CharField(label='Class Name', max_length=20, required=False)
-    class_grade = forms.ChoiceField(label='Grade', choices=class_grade_choices, error_messages={"required": "*"})
-    class_credits = forms.CharField(label='Credits',  error_messages={"required": "+64+989849819198419851"})
+GPAFormSet = modelformset_factory(GPA, form=GPAForm, extra=4)
 
-    def clean(self):
-        cleaned_data = super().clean()
-
-        return cleaned_data
-GPAFormset = formset_factory(GPAForm, extra=4)
-'''
+from django import forms
+import datetime
+import calendar
 
 
-GPAFormSet = modelformset_factory(
+class InflationForm(forms.Form):
+    today = datetime.date.today()
+    year = today.year
+    month = today.month
 
-    GPA, fields=("class_name", "class_grade", "class_credits"), extra=2
-)
+    months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+              "November", "December"]
+
+    month_alt_choices = months[0:month - 2]
+
+    end_month_choices_raw = [(month, month) for month in month_alt_choices]
+    end_month_choices = tuple(end_month_choices_raw)
+
+
+
+    year_choice = [(i, i) for i in range(1913, year + 1)]
+    start_month_choices = [
+        ("January", "January"), ("February", "February"), ("March", "March"),
+        ("April", "April"), ("May", "May"),
+        ("June", "June"), ("July", "July"), ("August", "August"), ("September", "September"), ("October", "October"),
+        ("November", "November"), ("December", "December")
+    ]
+
+    start_money = forms.FloatField(initial=1, label="$USD", min_value=0.01, max_value=999999)
+    month_start = forms.ChoiceField(choices=end_month_choices, initial="January", label="Start Month")
+    year_start = forms.TypedChoiceField(choices=year_choice, coerce=int, initial="2000", label="Start Year")
+    # end_money = forms.FloatField(initial=1, label="$USD", min_value=0, max_value=999999)
+    month_end = forms.ChoiceField(choices=start_month_choices, initial="January", label="End Month")
+    year_end = forms.TypedChoiceField(choices=year_choice, coerce=int, initial=year, label="End Year")

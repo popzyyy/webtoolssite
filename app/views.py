@@ -5,9 +5,12 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.context_processors import request
 from django.views.generic import TemplateView
-
-from .forms import GPAFormSet
+from app.validators import *
+from app.forms import GPAFormSet, InflationForm
 from app.models import *
+import json
+import requests
+import datetime
 
 
 def refresh(request):
@@ -19,18 +22,76 @@ def home(request):
 
     return render(request, 'home.html')
 
+
 def tools(request):
     getipaddress(request)
 
     return render(request, 'tools.html')
 
 
+def inflation(request):
+    getipaddress(request)
+    today = datetime.date.today()
+    data = Inflation.objects.all().order_by('-year', '-month_code')
+
+    if not Inflation.objects.filter(year=today.year, month_code="M" + str(today.month - 2)).exists():
+        headers = {'Content-type': 'application/json'}
+        data = json.dumps({"seriesid": ['CUUR0000SA0'], "startyear": str(today.year - 9), "endyear": str(today.year)})
+        p = requests.post('https://api.bls.gov/publicAPI/v1/timeseries/data/', data=data, headers=headers)
+        json_data = json.loads(p.text)
+        print(json_data)
+
+        if 'series' in json_data.get('Results', {}):
+            for series in json_data['Results']['series']:
+                # x = prettytable.PrettyTable(["seriesID", "year", "period", "value"])
+
+                # seriesId = series['seriesID']
+                for item in series['data']:
+                    year = item['year']
+                    month_code = item['period']
+                    month = item['periodName']
+                    value = item['value']
+                    inflation_data = Inflation(year=year, month_code=month_code, month=month, inflation_rate=value)
+
+                    if not Inflation.objects.filter(year=year, month_code=month_code).exists():
+                        inflation_data.save()
+
+                    # if 'M01' <= month <= 'M12':
+                    #      x.add_row([seriesId, year, month, value])
+
+        return render(request, "inflation.html", {'data': data})
+
+    if request.method == "POST":
+        form = InflationForm(request.POST)
+        if form.is_valid():
+            print('test')
+
+            month_start = form.cleaned_data.get('month_start')
+            year_start = form.cleaned_data.get('year_start')
+            month_end = form.cleaned_data.get('month_end')
+            year_end = form.cleaned_data.get('year_end')
+
+            start_money = form.cleaned_data.get('start_money')
+
+            inflation_rate_end = Inflation.objects.get(year=year_end, month=month_end)
+            inflation_rate_start = Inflation.objects.get(year=year_start, month=month_start)
+            print(inflation_rate_end.inflation_rate)
+            print(inflation_rate_start.inflation_rate)
+
+            end_muney = (float(inflation_rate_end.inflation_rate) / float(
+                inflation_rate_start.inflation_rate)) * start_money
+            print(end_muney)
+
+            return render(request, "inflation.html", {'data': data, 'formset': form, 'end_muney': end_muney})
+
+    formset = InflationForm()
+    return render(request, "inflation.html", {'data': data, 'formset': formset})
+
 
 class GPACalc(TemplateView):
     template_name = "gpacalculator.html"
 
     def get(self, *args, **kwargs):
-        # Use the correct key for the formset in the context
         formset = GPAFormSet(queryset=GPA.objects.none())
         return self.render_to_response({'formset': formset})
 
@@ -38,9 +99,6 @@ class GPACalc(TemplateView):
         formset = GPAFormSet(data=self.request.POST)
 
         if formset.is_valid():
-            instances = formset.save(commit=False)
-            print(formset.cleaned_data)
-
             total_credits = []
             total_gpa_points = []
 
@@ -50,25 +108,30 @@ class GPACalc(TemplateView):
                 "D": 1.0, "D-": 0.7, "F": 0.0
             }
 
-            for instance in instances:
-                class_grade = instance.class_grade
-                raw_gpa = grade_to_gpa.get(class_grade)
-                total_gpa_points.append(raw_gpa*instance.class_credits)
-                total_credits.append(instance.class_credits)
+            for form in formset:
+                if form.is_valid():
+                    class_grade = form.cleaned_data.get('class_grade')
+                    class_credits = form.cleaned_data.get('class_credits')
 
-                instance.save()
+                    if not class_grade or not class_credits:
+                        form.add_error(None, "Fill out both class grade and credits.")
+                        continue
 
-            cumulative_weighted_gpa = sum(total_gpa_points) / sum(total_credits)
+                    raw_gpa = grade_to_gpa.get(class_grade)
+                    total_gpa_points.append(raw_gpa * class_credits)
+                    total_credits.append(class_credits)
 
-            # Use the correct key for rendering the formset in the context
-            return render(self.request, "gpacalculator.html", {'formset': formset, 'cum_gpa': cumulative_weighted_gpa})
+                    form.save()
 
-        # Use the correct key for rendering the formset in the context
+            if total_credits:
+                cumulative_weighted_gpa = sum(total_gpa_points) / sum(total_credits)
+            else:
+                cumulative_weighted_gpa = 0.0
+
+            return render(self.request, "gpacalculator.html",
+                          {'formset': formset, 'cum_gpa': cumulative_weighted_gpa})
+
         return self.render_to_response({'formset': formset})
-
-
-
-
 
 
 def getipaddress(request):
@@ -79,9 +142,15 @@ def getipaddress(request):
         else:
             ip = request.META.get('REMOTE_ADDR')
 
-        exists = Visitor.objects.filter(ipaddress=ip).exists()
-        if not exists:
+        if not Visitor.objects.filter(ipaddress=ip).exists():
             bruh = Visitor(ipaddress=ip)
             bruh.save()
     except:
         pass
+
+
+def YearUpdate():
+    today = datetime.date.today()
+    if not Year.objects.filter(year=today.year).exists():
+        year = Year(year=today.year)
+        year.save()

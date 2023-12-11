@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from app.forms import CustomUserCreationForm, CustomUserChangeForm
+from app.forms import *
 
 from app.models import CustomUser, Visitor, GPA
 
@@ -40,7 +40,12 @@ class GPAAdmin(admin.ModelAdmin):
     search_fields = ('class_name', 'class_grade', 'class_credits')
     list_filter = ('class_name', 'class_grade', 'class_credits')
 
+class YearAdmin(admin.ModelAdmin):
+    model = Year
+
+
 
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Visitor, VisitorAdmin)
 admin.site.register(GPA, GPAAdmin)
+admin.site.register(Year, YearAdmin)

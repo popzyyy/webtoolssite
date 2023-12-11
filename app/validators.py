@@ -2,9 +2,9 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 
-def validate_credits_length(value):
-    if len(value) > 1:
+def validate_credits(value):
+    if value is None or value == '':
         raise ValidationError(
-            _('Credits cannot be more than 9!'),
-            params={'value': value},
+            _('Please enter a valid number of credits'),
+            params={'error': value},
         )

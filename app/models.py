@@ -7,6 +7,10 @@ from django.core.validators import validate_email
 from django.db import models
 from django.utils import timezone
 from app.managers import CustomUserManager
+from app.validators import *
+
+
+
 
 
 def refresh(request):
@@ -42,14 +46,34 @@ class Visitor(models.Model):
 
 class GPA(models.Model):
     id = models.BigAutoField(primary_key=True, editable=False)
-    weighted_gpa = models.DecimalField(decimal_places=5, max_digits=6, blank=True, null=True)
+
     class_grade_choices = [
         ("A+", "A+"), ("A", "A"), ("A-", "A-"), ("B+", "B+"), ("B", "B"), ("B-", "B-"), ("C+", "C+"), ("C", "C"),
         ("C-", "C-"), ("D+", "D+"), ("D", "D"), ("D-", "D-"), ("F", "F")
     ]
+    class_credit_choices = [
+        (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)
+    ]
     class_name = models.CharField(max_length=12, blank=True, null=True)
-    class_grade = models.CharField(default='—', max_length=2, choices=class_grade_choices, blank=True, null=True)
-    class_credits = models.IntegerField(blank=True, null=True)
+    class_grade = models.CharField(max_length=2, choices=class_grade_choices, blank=True, null=True)
+    class_credits = models.IntegerField(choices=class_credit_choices, blank=True, null=True)
 
     def __str__(self):
         return self.id, self.class_credits, self.class_grade
+
+
+class Inflation(models.Model):
+    id = models.BigAutoField(primary_key=True, editable=False)
+    year = models.CharField(blank=True, null=True, max_length=4)
+    month_code = models.CharField(blank=True, null=True, max_length=4)
+    month = models.CharField(blank=True, null=True, max_length=12)
+    inflation_rate = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        # Return a string representation of the object
+        return f"{self.year},{self.month},{self.inflation_rate}"
+
+
+class Year(models.Model):
+    id = models.BigAutoField(primary_key=True, editable=False)
+    year = models.CharField(blank=True, null=True, max_length=4)

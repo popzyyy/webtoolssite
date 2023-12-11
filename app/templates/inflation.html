@@ -1,0 +1,76 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block content %}
+    <style>
+        .formset-container {
+            display: block;
+            margin-block-start: 1em;
+            margin-block-end: 1em;
+            margin-inline-start: 0px;
+            margin-inline-end: 0px;
+        }
+    </style>
+    <!-- Banner -->
+    <div id="banner-wrapper">
+        <div id="banner" class="box container">
+            <div class="container mt-5">
+
+                <h2>Inflation Calculator</h2>
+                <p>Very fun and very cool</p>
+            {% if end_muney %}
+                    <div class="row aln-left">
+                        <p><strong>Inflated Dollar Value: ${{ end_muney | floatformat:2 }}</strong></p>
+                    </div>
+                {% endif %}
+
+                <form id="form-container" class="row" method="POST">{% csrf_token %}
+                    <div class="fieldWrapper">
+
+                        {% for form in formset %}
+                            <div class="col-md-6">
+                                <div class="formset-container">
+                                    <label for="{{ form.id_for_label }}">{{ form.label }}</label>
+                                    {{ form }}
+                                </div>
+
+                            </div>
+                        {% endfor %}
+
+                        {% if error %}
+                            {{ error }}
+                        {% endif %}
+
+                        <button type="submit" class="col-md-6">Submit</button>
+
+                    </div>
+                </form>
+
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Month</th>
+                        <th>Inflation Rate</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in data %}
+                        <tr>
+                            <td>{{ item.year }}</td>
+                            <td>{{ item.month }}</td>
+                            <td>{{ item.inflation_rate }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+
+
+            </div>
+        </div>
+    </div>
+    </div>
+
+{% endblock %}
+
+
+
