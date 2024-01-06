@@ -1,8 +1,10 @@
+import tablib
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from app.forms import *
-
-from app.models import CustomUser, Visitor, GPA
+from import_export import resources
+from app.models import CustomUser, Visitor, GPA, Inflation
+from import_export.admin import ImportExportModelAdmin
 
 
 class CustomUserAdmin(UserAdmin):
@@ -40,12 +42,17 @@ class GPAAdmin(admin.ModelAdmin):
     search_fields = ('class_name', 'class_grade', 'class_credits')
     list_filter = ('class_name', 'class_grade', 'class_credits')
 
-class YearAdmin(admin.ModelAdmin):
-    model = Year
 
+class InflationMixin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ('id', 'year', 'month_code', 'month', 'inflation_rate', 'percent_change')
+    search_fields = ('id', 'year', 'month_code', 'month', 'inflation_rate', 'percent_change')
+    list_filter = ('id', 'year', 'month_code', 'month', 'inflation_rate', 'percent_change')
+
+    class Meta:
+        model = Inflation
 
 
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Visitor, VisitorAdmin)
 admin.site.register(GPA, GPAAdmin)
-admin.site.register(Year, YearAdmin)
+admin.site.register(Inflation, InflationMixin)

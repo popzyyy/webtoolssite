@@ -1,6 +1,12 @@
 {% extends 'index.html' %}
+{% load humanize %}
+{% load mathfilters %}
+{% load crispy_forms_filters %}
 {% load static %}
+
+
 {% block content %}
+
     <style>
         .formset-container {
             display: block;
@@ -9,48 +15,122 @@
             margin-inline-start: 0px;
             margin-inline-end: 0px;
         }
+
+        /* Center the form */
+        #form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Center the table */
+        table {
+            margin: 0 auto;
+        }
     </style>
-    <!-- Banner -->
+
     <div id="banner-wrapper">
         <div id="banner" class="box container">
-            <div class="container mt-5">
+            <h2 class="text-center">Inflation Calculator</h2>
+            <hr>
+            <h3>CPI Index data is through the Bureau of Labor Statistics API. </h3>
+            <div id="features-wrapper">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-6">
+                            <!-- Box -->
+                            <img src="{% static 'images/print.gif' %}" width="80%" alt="">
+                        </div>
+                        <div class="col-6">
+                            <!-- Box -->
+                            <section style="outline: 3px solid black" class="box feature">
+                                <div class="inner">
+                                    <header>
+                                        <form id="form-container" class="row" method="POST">
+                                            {% csrf_token %}
+                                            <div class="fieldWrapper">
+                                                <div class="formset-container">
+                                                    <div class="row">
+                                                        <div style="padding-bottom: 10px" class="form-container">
+                                                            <p style="font-size: 2em">
+                                                                <b>{{ inflationform.start_money.label }}:</b> {{ inflationform.start_money }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
 
-                <h2>Inflation Calculator</h2>
-                <p>Very fun and very cool</p>
-            {% if end_muney %}
-                    <div class="row aln-left">
-                        <p><strong>Inflated Dollar Value: ${{ end_muney | floatformat:2 }}</strong></p>
-                    </div>
-                {% endif %}
+                                                    <p style="display: flex; flex-direction: column; align-items: center; font-size: 1.2em">
+                                                        <b>
+                                                            in </b></p>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
 
-                <form id="form-container" class="row" method="POST">{% csrf_token %}
-                    <div class="fieldWrapper">
+                                                            <label for="{{ inflationform.month_start.id_for_label }}">{{ inflationform.month_start.label }}</label>
+                                                            {{ inflationform.month_start }}
 
-                        {% for form in formset %}
-                            <div class="col-md-6">
-                                <div class="formset-container">
-                                    <label for="{{ form.id_for_label }}">{{ form.label }}</label>
-                                    {{ form }}
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label for="{{ inflationform.year_start.id_for_label }}">{{ inflationform.year_start.label }}</label>
+                                                            {{ inflationform.year_start }}
+
+                                                        </div>
+                                                    </div>
+
+                                                    {% if not end_muney %}
+                                                        <br><br><br>
+                                                    {% endif %}
+                                                    {% if end_muney %}
+                                                        <p style="display: flex; flex-direction: column; align-items: center;padding-top: .75em; font-size: 1em">
+                                                            <b>
+                                                                is the same as</b></p>
+                                                        <p style="display: flex; flex-direction: column; align-items: center;padding-top: .75em; font-size: 1.25em">
+                                                            <b><strong>
+                                                                ${{ end_muney | floatformat:2 | intcomma }}</strong></b>
+                                                        </p>
+                                                        <p style="display: flex; flex-direction: column; align-items: center;padding-top: .75em; font-size: 1em">
+                                                            <b>
+                                                                in</b></p>
+                                                    {% endif %}
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <label for="{{ inflationform.month_end.id_for_label }}">{{ inflationform.month_end.label }}</label>
+                                                            {{ inflationform.month_end }}
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label for="{{ inflationform.year_end.id_for_label }}">{{ inflationform.year_end.label }}</label>
+                                                            {{ inflationform.year_end }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button class="button" type="submit">Calculate 🤓</button>
+                                            </div>
+                                            {% if inflationform.year_end.errors %}
+                                                <div class="col-md-6">
+                                                    <ul>
+                                                        {% for error in inflationform.year_end.errors %}
+                                                            <li><b>{{ error }}</b></li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            {% endif %}
+                                        </form>
+                                    </header>
+
                                 </div>
-
-                            </div>
-                        {% endfor %}
-
-                        {% if error %}
-                            {{ error }}
-                        {% endif %}
-
-                        <button type="submit" class="col-md-6">Submit</button>
-
+                            </section>
+                        </div>
                     </div>
-                </form>
-
-                <table>
+                    <br>
+                </div>
+                <br>
+                <table class="table">
                     <thead>
                     <tr>
                         <th>Year</th>
                         <th>Month</th>
-                        <th>Inflation Rate</th>
+                        <th>CPI Index</th>
+                        <th>Month over Month</th>
+                        <th>Rolling 12 Month</th>
+                        <th>Total Inflation Since 1913</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -58,19 +138,33 @@
                         <tr>
                             <td>{{ item.year }}</td>
                             <td>{{ item.month }}</td>
-                            <td>{{ item.inflation_rate }}</td>
+                            <td>{{ item.inflation_rate | floatformat:2 }}</td>
+                            <td>{{ item.percent_change_mom | floatformat:2 }}
+                                {% if item.percent_change_mom is not NULL %} % {% endif %}</td>
+                            <td>{{ item.percent_change | floatformat:2 }}
+                                {% if item.percent_change is not NULL %} % {% endif %}</td>
+                            <td>{{ item.percent_change_all | floatformat:0 | intcomma }}
+                                {% if item.percent_change_all is not NULL %} % {% endif %}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
-
-
             </div>
         </div>
     </div>
     </div>
 
+    <audio id="myAudio" autoplay="autoplay" loop="loop" preload="auto">
+        <source src="{% static 'audio/WeaponsofMassDistortion.mp3' %}" type="audio/mpeg">
+    </audio>
+
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let myAudio = document.getElementById("myAudio");
+            myAudio.play();
+        });
+    </script>
+
+
 {% endblock %}
-
-
-

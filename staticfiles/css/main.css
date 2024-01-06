@@ -1634,7 +1634,7 @@ input, select, textarea {
 		-webkit-appearance: none;
 		position: relative;
 		display: inline-block;
-		background: #0090c5;
+		background: #08a848;
 		color: #fff;
 		text-decoration: none;
 		border-radius: 6px;
@@ -1661,7 +1661,7 @@ input, select, textarea {
 		input[type="reset"]:hover,
 		button:hover,
 		.button:hover {
-			background: #10a0d5;
+			background: #12c71b;
 		}
 
 		input[type="button"]:active,
@@ -1669,7 +1669,7 @@ input, select, textarea {
 		input[type="reset"]:active,
 		button:active,
 		.button:active {
-			background: #20b0e5;
+			background: #2cdc18;
 		}
 
 		input[type="button"].alt,
@@ -1938,10 +1938,10 @@ input, select, textarea {
 	}
 
 		#logo h1 {
-			background: #ff4486;
+			background: rgba(0, 0, 0, 0.79);
 			color: #fff;
 			border-radius: 6px;
-			font-family: 'Oleo Script', serif;
+			font-family: 'Copperplate Gothic Bold', serif;
 			font-weight: 400;
 			padding: 0.25em 0.2em 0.25em 0.2em;
 			font-size: 3.25em;

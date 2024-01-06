@@ -1,1 +1,8 @@
 Django~=4.2.8
+requests~=2.31.0
+django-crispy-forms=2.1
+django-filter~=23.5
+django import-export~=3.3.5
+
+tablib~=3.5.0
+python-dateutil~=2.8.2
